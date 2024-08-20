@@ -5,11 +5,8 @@
 
 #include "bargo.h"
 
-// TODO: break into headers and implementation files
 // TODO: getopt to build better UX
 // TODO: add makefile
-// TODO: add better project structure
-
 
 int copy_files();
 
