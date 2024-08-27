@@ -8,16 +8,18 @@
 #include "bargo.h"
 
 int main(int argc, char *argv[]) {
-  if (argc < 2) {
-    printf("Usage: bargo new <project_name>");
-    exit(1);
-  }
+        if (argc < 2) {
+	        print_usage("<project_name>");
+               return EXIT_FAILURE;
+	}
 
-  int fd = init_bargo();
+	const char *project_name = argv[1];
 
-  if (fd == 1) {
-    fprintf(stdout, "<project_name> ready.");
-  }
-
-  return 0;
-}
+        if (init_bargo(project_name) == EXIT_SUCCESS) {
+	    printf("Project '%s' initialized successfully.\n", project_name);
+	    return EXIT_SUCCESS;
+	} else {
+	    printf("Failed to initialize project '%s'.\n", project_name);
+	    return EXIT_FAILURE;
+	}
+ }    
