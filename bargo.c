@@ -5,53 +5,65 @@
 
 #include "bargo.h"
 
-// TODO: getopt to build better UX
 // TODO: add makefile
 
 int copy_files();
 
-void handle_error(char *str) {
-  perror(str);
-  exit(1);
+void print_usage(const char *prog_name) {
+    printf("Usage: %s [-i] [-c] [-h]\n", prog_name);
+    printf("  -i, --init   Initialize the project\n");
+    printf("  -c, --copy   Copy files\n");
+    printf("  -h, --help   Display this help message\n");
 }
 
-// TODO: refactor to use this for general file creation
-FILE *create_file(char *filename) {
+void handle_error(const char *str, FILE *fd) {
+  perror(str);
+  fclose(fd);
+  exit(EXIT_FAILURE);
+}
+
+FILE *create_file(const char *filename) {
   FILE *fd = fopen(filename, "w+");
 
   if (fd == NULL) {
-    fprintf(stderr, "Error creating %s\n", filename);
-    exit(1);
+    handle_error("Error creating file", fd);
   }
 
   return fd;
 }
 
-int create_init_files() {
-  int fd = mkdir("./src", 0777);
+int create_init_files(const char *prog_name) {
+  char project_dir[MAX_PATH_LENGTH];
+  char src_dir[MAX_PATH_LENGTH];
+  char main_file_path[MAX_PATH_LENGTH];
+  char header_file_path[MAX_PATH_LENGTH];
 
-  if (fd == -1) {
-    handle_error("mkdir");
+  snprintf(project_dir, sizeof(project_dir), "./%s", prog_name);
+  if (mkdir(project_dir, 0777) == -1) {
+    handle_error("mkdir", NULL);
   }
 
-  int main_file_fd = open("./src/main.c", O_CREAT, 0644);
-  if (main_file_fd == -1) {
-    handle_error("open");
+  snprintf(src_dir, sizeof(src_dir), "%s/src", project_dir);
+  if (mkdir(src_dir, 0777) == -1) {
+    handle_error("mkdir src", NULL);
   }
 
-  int header_file_fd = open("./src/header.h", O_CREAT, 0644);
-  if (header_file_fd == -1) {
-    handle_error("open");
-  }
+  snprintf(main_file_path, sizeof(main_file_path), "%s/main.c", src_dir);
+  FILE *main_file = create_file(main_file_path);
+  fclose(main_file);
 
-  return 1;
+  snprintf(header_file_path, sizeof(header_file_path), "%s/header.c", src_dir);
+  FILE *header_file = create_file(header_file_path);
+  fclose(header_file);
+
+  return SUCCESS;
 }
 
-int init_bargo() { 
-  int res = create_init_files();
+int init_bargo(const char *project_name) { 
+  int res = create_init_files(project_name);
   int cp_res = copy_files();
-  if (res == 1 && cp_res == 1) return 1;
-  return 0; 
+  if (res == SUCCESS && cp_res == SUCCESS) return SUCCESS;
+  return FAILURE; 
 }
 
 int copy_files() {
@@ -60,24 +72,19 @@ int copy_files() {
 
   input = fopen("./init/main.txt", "r");
   if (input == NULL) {
-    fprintf(stderr, "Error reading %s\n", "./init/main.txt");
-    fclose(input);
-    exit(1);
+   handle_error("open", input); 
   }
 
   output = fopen("./src/main.c", "w");
   if (output == NULL) {
-    fprintf(stderr, "Error reading %s\n", "./src/main.c");
-    fclose(output);
-    exit(1);
+   handle_error("open", input); 
   }
 
   while ((c = getc(input)) != EOF) {
-    printf("%c", c);
     putc(c, output);
   }
 
   fclose(input);
   fclose(output);
-  return 1;
+  return SUCCESS;
 }
